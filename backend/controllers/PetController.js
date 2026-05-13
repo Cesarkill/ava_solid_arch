@@ -170,10 +170,20 @@ module.exports = class PetController {
         await pet.findByIdAndDelete(id);
         res.status(200).json({ message: 'Pet removido com sucesso!', data: pet });
     }
+
     static async schedule(req, res) {
         const id = req.params.id;
 
         if (!mongoose.Types.ObjectId.isValid(id)) {
+
+    static async updatePet(req, res) {
+        const {name, age, weight, color} = req.body;
+        const id = req.params.id;
+        const images = req.files 
+        const upadatedData = {};
+        
+        if(!mongoose.Types.ObjectId.isValid(id)) {
+
             res.status(422).json({ message: 'ID inválido!' });
             return;
         }
@@ -185,6 +195,7 @@ module.exports = class PetController {
         }
         const token = getToken(req);
         const user = await getUserByToken(token);
+
 
         if (pet.user._id.toString() === user._id.toString()) {
             res.status(403).json({ message: 'Você não pode agendar uma visita com seu próprio pet!' });
@@ -233,6 +244,30 @@ module.exports = class PetController {
         }catch (error) {
             res.status(503).json({ message: error });
         }
+
+        if (pet.user._id.toString() !== user._id.toString()) {
+            res.status(403).json({ message: 'Apenas o dono do pet pode editá-lo!' });
+            return;
+        }
+        if (name) {
+            upadatedData.name = name;
+        }
+        if (age) {
+            upadatedData.age = age;
+        }
+        if (weight) {
+            upadatedData.weight = weight;
+        }
+        if (color) {
+            upadatedData.color = color;
+        }
+        if (images && images.length > 0) {
+            upadatedData.images = images.map((file) => file.filename);
+        }
+        await pet.findByIdAndUpdate(id, upadatedData);
+        res.status(200).json({ message: 'Pet atualizado com sucesso!' });
+    }
+
     }
     }
 
